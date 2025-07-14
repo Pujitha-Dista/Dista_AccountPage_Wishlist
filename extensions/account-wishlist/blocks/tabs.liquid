@@ -78,7 +78,7 @@
     }
   };
 
-  fetch(`/apps/apw/app/apimenu?storeUrl={{ shop.domain }}`)
+  fetch(`/apps/apw/app/apimenu?storeUrl={{ shop.permanent_domain }}`)
     .then(res => res.json())
     .then(data => {
       const settings = {

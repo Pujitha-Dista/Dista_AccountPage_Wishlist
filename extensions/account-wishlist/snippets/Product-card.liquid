@@ -121,7 +121,7 @@
     const productId = card.dataset.productId;
     if (!card || !productId) return;
     const customerId = '{{ customer.id }}';
-    const storeUrl = '{{ shop.domain }}';
+    const storeUrl = '{{ shop.permanent_domain }}';
     const uid = '{{ uid }}';
     const jwtToken = window.WishlistUtils.getCookie('jwt');
     const currency = '{{ localization.country.currency.iso_code }}';

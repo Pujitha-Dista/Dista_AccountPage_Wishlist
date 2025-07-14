@@ -62,7 +62,7 @@
       </div>
       <div class="address-icon">
         {% if customer.default_address.id %}
-          <div class="edit-icon" onclick="addressEdit({{ customer.default_address.id }}, {{ customer.default_address | json | escape }}, 'address-block-', {{ customer.id }},false,'{{ shop.url }}')">
+          <div class="edit-icon" onclick="addressEdit({{ customer.default_address.id }}, {{ customer.default_address | json | escape }}, 'address-block-', {{ customer.id }},false,'{{ shop.permanent_domain }}')">
             <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M8.20968 2.79498C8.64437 2.32401 8.86172 2.08853 9.09268 1.95117C9.64996 1.61974 10.3362 1.60943 10.9027 1.92398C11.1375 2.05435 11.3616 2.2832 11.8096 2.74091C12.2577 3.19861 12.4817 3.42747 12.6093 3.66734C12.9172 4.24612 12.9072 4.94709 12.5827 5.51637C12.4482 5.7523 12.2177 5.97433 11.7567 6.41838L6.27122 11.7018C5.39753 12.5433 4.96069 12.9641 4.41472 13.1773C3.86876 13.3906 3.26856 13.3749 2.06815 13.3435L1.90482 13.3392C1.53938 13.3296 1.35666 13.3249 1.25045 13.2043C1.14423 13.0838 1.15873 12.8977 1.18773 12.5254L1.20348 12.3233C1.28511 11.2755 1.32592 10.7517 1.53052 10.2808C1.73511 9.80985 2.08802 9.42748 2.79385 8.66275L8.20968 2.79498Z" stroke="#565656" stroke-width="1.5" stroke-linejoin="round"/>
               <path d="M7.58337 2.86182L11.6667 6.94515" stroke="#565656" stroke-width="1.5" stroke-linejoin="round"/>
@@ -98,7 +98,7 @@
                     class="address-delete-form"
                     method="post"
                     action="/account/addresses/{{ customer.default_address.id }}"
-                    onsubmit="handleDeleteSubmit(event,{{ customer.default_address.id }},{{ customer.id }},'{{ shop.url }}')"
+                    onsubmit="handleDeleteSubmit(event,{{ customer.default_address.id }},{{ customer.id }},'{{ shop.permanent_domain }}')"
                   >
                     <input type="hidden" name="_method" value="delete">
                     <button type="submit" class="deleteconfirm-btn">Delete</button>
@@ -162,7 +162,7 @@
               {% endif %}
             </div>
             <div class="address-icon">
-              <div class="edit-icon" onclick="addressEdit({{ address.id }},{{ address | json | escape }}, 'address-block-',{{ customer.id }},true,'{{ shop.url }}')">
+              <div class="edit-icon" onclick="addressEdit({{ address.id }},{{ address | json | escape }}, 'address-block-',{{ customer.id }},true,'{{ shop.permanent_domain }}')">
                 <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M8.20968 2.79498C8.64437 2.32401 8.86172 2.08853 9.09268 1.95117C9.64996 1.61974 10.3362 1.60943 10.9027 1.92398C11.1375 2.05435 11.3616 2.2832 11.8096 2.74091C12.2577 3.19861 12.4817 3.42747 12.6093 3.66734C12.9172 4.24612 12.9072 4.94709 12.5827 5.51637C12.4482 5.7523 12.2177 5.97433 11.7567 6.41838L6.27122 11.7018C5.39753 12.5433 4.96069 12.9641 4.41472 13.1773C3.86876 13.3906 3.26856 13.3749 2.06815 13.3435L1.90482 13.3392C1.53938 13.3296 1.35666 13.3249 1.25045 13.2043C1.14423 13.0838 1.15873 12.8977 1.18773 12.5254L1.20348 12.3233C1.28511 11.2755 1.32592 10.7517 1.53052 10.2808C1.73511 9.80985 2.08802 9.42748 2.79385 8.66275L8.20968 2.79498Z" stroke="#565656" stroke-width="1.5" stroke-linejoin="round"/>
                   <path d="M7.58337 2.86182L11.6667 6.94515" stroke="#565656" stroke-width="1.5" stroke-linejoin="round"/>
@@ -191,7 +191,7 @@
                         class="address-delete-form"
                         method="post"
                         action="/account/addresses/{{ address.id }}"
-                        onsubmit="handleDeleteSubmit(event,{{ address.id }},{{ customer.id }},'{{ shop.url }}')"
+                        onsubmit="handleDeleteSubmit(event,{{ address.id }},{{ customer.id }},'{{ shop.permanent_domain }}')"
                       >
                         <input type="hidden" name="_method" value="delete">
                         <button type="submit" class="deleteconfirm-btn">Delete</button>
@@ -221,7 +221,7 @@
         method="post"
         action="/account/addresses"
         id="add-address-form"
-        onsubmit="handleAddAddress(event,{{customer.id}},'{{ shop.url }}')"
+        onsubmit="handleAddAddress(event,{{customer.id}},'{{ shop.permanent_domain }}')"
       >
         <input type="hidden" name="form_type" value="customer_address">
         <input type="hidden" name="utf8" value="✓">

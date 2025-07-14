@@ -47,7 +47,7 @@ export const loader = async ({ request }) => {
     }
   `;
 
-  const storeHostname = new URL(storeUrl).hostname;
+  const storeHostname = storeUrl;
   const session = await prisma.session.findFirst({
     where: { shop: storeHostname },
     orderBy: { expires: "desc" },

@@ -36,7 +36,7 @@
     document.addEventListener('DOMContentLoaded', () => {
      window.wishlistIconManager = new WishlistIconManager({
       customerId: '{{ customer.id }}',
-      storeUrl: '{{ shop.domain }}',
+      storeUrl: '{{ shop.permanent_domain }}',
       uid: '{{ uid }}',
       currency: '{{ localization.country.currency.iso_code }}'
     });

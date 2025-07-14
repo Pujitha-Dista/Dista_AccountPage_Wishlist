@@ -210,7 +210,7 @@
                     <button onclick="closeOrderDeletePop({{ order.id }})" class="deletecancel-btn">Cancel</button>
                   </div>
                   <div>
-                    <button class="deleteconfirm-btn" data-order-id="{{ order.id }}" onclick="cancelOrder(this,'{{ shop.url }}')">
+                    <button class="deleteconfirm-btn" data-order-id="{{ order.id }}" onclick="cancelOrder(this,'{{ shop.permanent_domain }}')">
                       Cancel Order
                     </button>
                   </div>

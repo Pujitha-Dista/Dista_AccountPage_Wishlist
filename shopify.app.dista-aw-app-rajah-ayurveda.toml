@@ -1,0 +1,42 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "847640cd7986587f65d6847d4cbd0012"
+application_url = "https://cholesterol-novel-nasty-feat.trycloudflare.com"
+embedded = true
+name = "Dista AW App - Rajah Ayurveda"
+handle = "dista-aw-app-rajah-ayurveda"
+
+[webhooks]
+api_version = "2025-07"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products,write_customers,read_customers,customer_write_customers,customer_read_customers,read_orders,write_orders"
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "distaxstaging.myshopify.com"
+include_config_on_deploy = true
+
+[auth]
+redirect_urls = [
+  "https://cholesterol-novel-nasty-feat.trycloudflare.com/auth/callback",
+  "https://cholesterol-novel-nasty-feat.trycloudflare.com/auth/shopify/callback",
+  "https://cholesterol-novel-nasty-feat.trycloudflare.com/api/auth/callback"
+]
+
+[app_proxy]
+url = "https://cholesterol-novel-nasty-feat.trycloudflare.com"
+subpath = "apw"
+prefix = "apps"
+
+[pos]
+embedded = false

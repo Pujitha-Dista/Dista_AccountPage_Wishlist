@@ -1,6 +1,7 @@
 .account-main-container {
+    margin-top: 20px;
     font-family: Poppins;
-    margin-bottom: 5%;
+    margin-bottom: 65px;
     display: flex;
     flex-direction: row;
     overflow: hidden;
@@ -491,7 +492,6 @@
 @media screen and (max-width: 768px) {
     .account-main-container {
         flex-direction: column;
-        margin-top: 20px;
     }
 
     .tab-container,

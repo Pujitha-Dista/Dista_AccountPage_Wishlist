@@ -118,7 +118,7 @@
 
       async fetchWishlist() {
         const customerId = '{{ customer.id }}';
-        const storeUrl = '{{ shop.domain }}';
+        const storeUrl = '{{ shop.permanent_domain }}';
         const uid = '{{ uid }}';
         let jwtToken = window.WishlistUtils.getCookie('jwt');
         let globalToken = jwtToken;

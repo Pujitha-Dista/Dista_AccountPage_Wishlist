@@ -8,7 +8,7 @@ export const action = async ({ request }) => {
     const body = await request.json();
     const orderId = body.orderId;
     const storeUrl = body.storeUrl
-    const storeHostname = new URL(storeUrl).hostname; 
+    const storeHostname = storeUrl; 
     if (!orderId) {
       return json(
         { success: false, message: "Missing orderId" },
