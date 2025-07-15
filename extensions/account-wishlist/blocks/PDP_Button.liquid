@@ -13,6 +13,9 @@
       gap: 5px;
       box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
     }
+    .quick-add-modal__content-info .wishlist-button{
+      display:none;
+    }
   </style>
 
   <div class="wishlist-button">Add to Wishlist</div>
@@ -20,6 +23,7 @@
   <script src="{{ 'wishlist.min.js' | asset_url }}" ></script>
 
   <script>
+    console.log()
     document.addEventListener('DOMContentLoaded', () => {
       const header = document.querySelector('header');
       const div = document.createElement('div');
@@ -47,6 +51,8 @@
       });
     });
   </script>
+{% else %}
+  <div class="wishlist-button" style="display: none;">Add to Wishlist</div>
 {% endif %}
 
 {% schema %}

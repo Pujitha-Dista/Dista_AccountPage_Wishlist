@@ -18,7 +18,7 @@ class WishlistButton {
     this.text = document.createElement('span');
     document.addEventListener('wishlist:icon-toggled', (e) => {
       if (e.detail.productId == this.productId) {
-        this.checkWishlistStatus();
+        this.setButtonState(false); // Update button state to "not wishlisted"
       }
     });
     this.init();

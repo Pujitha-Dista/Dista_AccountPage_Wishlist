@@ -144,6 +144,11 @@
         card.remove();
         WishlistApp.fetchWishlist();
 
+        // Dispatch a custom event to notify the wishlist button
+        document.dispatchEvent(new CustomEvent('wishlist:icon-toggled', {
+          detail: { productId }
+        }));
+
         if (window.wishlistIconManager) {
           window.wishlistIconManager.updateWishlistStatus().then(() => {
             window.wishlistIconManager.updateIconsForProduct(productId);
