@@ -10,21 +10,16 @@ handle = "dista-aw-app-rajah-ayurveda"
 api_version = "2025-07"
 
   [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
-  uri = "/webhooks/app/uninstalled"
-
-  [[webhooks.subscriptions]]
   topics = [ "app/scopes_update" ]
   uri = "/webhooks/app/scopes_update"
 
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products,write_customers,read_customers,customer_write_customers,customer_read_customers,read_orders,write_orders"
-
-[build]
-automatically_update_urls_on_dev = true
-dev_store_url = "distaxstaging.myshopify.com"
-include_config_on_deploy = true
+scopes = "customer_read_customers,customer_write_customers,read_customers,read_orders,write_customers,write_orders,write_products"
 
 [auth]
 redirect_urls = [
@@ -40,3 +35,6 @@ prefix = "apps"
 
 [pos]
 embedded = false
+
+[build]
+include_config_on_deploy = true
