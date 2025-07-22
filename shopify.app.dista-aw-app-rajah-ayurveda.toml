@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "847640cd7986587f65d6847d4cbd0012"
-application_url = "https://dista-accountpage-wishlist.onrender.com"
+application_url = "https://kids-railroad-pe-mp.trycloudflare.com"
 embedded = true
 name = "Dista AW App - Rajah Ayurveda"
 handle = "dista-aw-app-rajah-ayurveda"
@@ -23,13 +23,13 @@ scopes = "customer_read_customers,customer_write_customers,read_customers,read_o
 
 [auth]
 redirect_urls = [
-  "https://dista-accountpage-wishlist.onrender.com/auth/callback",
-  "https://dista-accountpage-wishlist.onrender.com/auth/shopify/callback",
-  "https://dista-accountpage-wishlist.onrender.com/api/auth/callback"
+  "https://kids-railroad-pe-mp.trycloudflare.com/auth/callback",
+  "https://kids-railroad-pe-mp.trycloudflare.com/auth/shopify/callback",
+  "https://kids-railroad-pe-mp.trycloudflare.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://dista-accountpage-wishlist.onrender.com"
+url = "https://kids-railroad-pe-mp.trycloudflare.com"
 subpath = "apw"
 prefix = "apps"
 
@@ -38,3 +38,5 @@ embedded = false
 
 [build]
 include_config_on_deploy = true
+dev_store_url = "distaxstaging.myshopify.com"
+automatically_update_urls_on_dev = true
