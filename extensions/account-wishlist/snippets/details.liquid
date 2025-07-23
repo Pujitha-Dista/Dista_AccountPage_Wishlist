@@ -197,14 +197,14 @@
       </div>
       <label class="edit-headings">Email address</label>
       <input type="email" class="input-fields" value="{{ customer.email }}" readonly>
-      <label class="edit-headings">Phone number</label>
+      {% comment %} <label class="edit-headings">Phone number</label>
       <input
         type="tel"
         pattern="^\+?[\d\s\-\(\)]{10,20}$"
         class="input-fields"
         name="phone"
         value="{{ customer.phone }}"
-      >
+      > {% endcomment %}
       <div class="btn-form">
         <span class="edit-close" onclick="profileClose()">Back</span>
         <button type="submit" class="edit-submit" onclick="profileSave(event)">Save</button>
