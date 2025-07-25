@@ -114,12 +114,13 @@ class WishlistIconManager {
     this.token = window.WishlistUtils.getCookie('jwt') || '';
     this.currency = currency || 'USD';
     this.wishlistedProducts = new Set();
+
     this.settings = {
       iconBefore: 'heart',
       iconAfter: 'filled',
       iconColorBefore: '#000000',
       iconColorAfter: '#ff0000',
-      defaultSelectors: [
+      Selectors: [
         '.product-card__image-container',
         '.card__media',
         '.grid-product__image-wrap',
@@ -127,10 +128,8 @@ class WishlistIconManager {
         '.product-image-container',
         '.product__image-wrapper',
         '[data-product-media-container]',
-        '.image-container',
-        '.card__inner',
+        '.image-container'
       ],
-      custoSelectors: [],
       checkInterval: 300,
       maxChecks: 5
     };
@@ -150,7 +149,7 @@ class WishlistIconManager {
         const customSelectors = JSON.parse(data.reply?.classSelector || '[]');
         if (Array.isArray(customSelectors)) {
           const cleaned = customSelectors.map(s => s.trim()).filter(Boolean);
-          this.settings.custoSelectors = Array.from(new Set([...this.settings.custoSelectors, ...cleaned]));
+          this.settings.Selectors = Array.from(new Set([...this.settings.Selectors, ...cleaned]));
         }
       } catch (e) {
         console.warn('Failed to parse classSelector from backend:', e);
@@ -192,21 +191,10 @@ class WishlistIconManager {
   }
 
   findImageContainer(element) {
-    let selectors = (this.settings.custoSelectors && this.settings.custoSelectors.length > 0)
-      ? this.settings.custoSelectors
-      : this.settings.defaultSelectors;
-
-    let imageContainer = null;
-    for (const selector of selectors) {
-      imageContainer = element.closest(selector);
-      if (imageContainer) break;
-    }
+    const imageContainer = element.closest(this.settings.Selectors.join(', '));
     if (imageContainer) return imageContainer;
 
-    // Try to find an image inside the element, or if the element itself is an image
-    let img = element.querySelector('img');
-    if (!img && element.matches('img')) img = element;
-    if (!img) img = element.closest('img');
+    const img = element.querySelector('img') || element.closest('img');
     return img ? img.parentElement : null;
   }
 
@@ -232,112 +220,81 @@ class WishlistIconManager {
   async handleProductCard(card) {
     if (card.dataset.wishlistProcessed || card.classList.contains(this.settings.excludedClass) || card.closest('.wishlist-card')) return;
 
-    // Find the image container or the image itself
-    let selectors = (this.settings.custoSelectors && this.settings.custoSelectors.length > 0)
-      ? this.settings.custoSelectors
-      : this.settings.defaultSelectors;
-
-    let imageContainer = null;
-    for (const selector of selectors) {
-      imageContainer = card.querySelector(selector) || card.closest(selector);
-      if (imageContainer) break;
-    }
-
-    // Fallback: use the <img> itself if no container found
-    if (!imageContainer) {
-      imageContainer = card.querySelector('img') || card.closest('img');
-    }
+    const imageContainer = this.findImageContainer(card);
     if (!imageContainer) return;
 
-    // Get product handle or ID
-    let productId = card.dataset.productId;
-    let handle = card.dataset.productHandle;
+    const handle = card.dataset.productHandle || card.href?.split('/products/')[1]?.split(/[?#]/)[0];
+    if (!handle) return;
 
-    // Try to get handle from anchor if not present
-    if (!handle) {
-      const productLink = card.querySelector('a[href*="/products/"]');
-      if (productLink) {
-        handle = productLink.getAttribute('href').split('/products/')[1]?.split(/[?#]/)[0];
+    try {
+      const productId = card.dataset.productId || await fetch(`/products/${handle}.js`)
+        .then(res => res.json())
+        .then(product => product.id.toString());
+
+      const icon = this.createIcon(this.wishlistedProducts.has(productId), productId);
+      const container = card.closest('.product-card, .card, .grid__item') || card;
+
+      if (window.getComputedStyle(container).position === 'static') {
+        container.style.position = 'relative';
       }
-    }
-    if (!productId && handle) {
-      // Fetch product ID via AJAX if needed
-      try {
-        const productData = await fetch(`/products/${handle}.js`).then(res => res.json());
-        productId = productData.id.toString();
-      } catch (e) {
-        console.error('Failed to fetch product data for handle:', handle, e);
-        return;
-      }
-    }
 
-    if (!productId) return;
+      icon.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
 
-    // Prevent duplicate icons
-    if (imageContainer.querySelector('.wishlist-icon')) return;
+        const isWishlisted = this.wishlistedProducts.has(productId);
+        const endpoint = isWishlisted ? 'apiremove' : 'apiwishlist';
 
-    // Create and append the icon
-    const icon = this.createIcon(this.wishlistedProducts.has(productId), productId);
+        try {
+          if (isWishlisted) {
+            this.wishlistedProducts.delete(productId);
+            icon.innerHTML = this.icons[this.settings.iconBefore](this.settings.iconColorBefore);
+          } else {
+            this.wishlistedProducts.add(productId);
+            icon.innerHTML = this.icons[this.settings.iconAfter](this.settings.iconColorAfter);
+          }
+          this.updateIconsForProduct(productId);
+          const response = await fetch(`/apps/apw/app/${endpoint}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              customerId: this.customerId,
+              productId,
+              uid: this.uid,
+              storeUrl: this.storeUrl,
+              token: this.token,
+              currency: this.currency
+            })
+          });
 
-    // Style the container if needed
-    if (window.getComputedStyle(imageContainer).position === 'static') {
-      imageContainer.style.position = 'relative';
-    }
-
-    icon.addEventListener('click', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const isWishlisted = this.wishlistedProducts.has(productId);
-      const endpoint = isWishlisted ? 'apiremove' : 'apiwishlist';
-
-      try {
-        if (isWishlisted) {
-          this.wishlistedProducts.delete(productId);
-          icon.innerHTML = this.icons[this.settings.iconBefore](this.settings.iconColorBefore);
-        } else {
-          this.wishlistedProducts.add(productId);
-          icon.innerHTML = this.icons[this.settings.iconAfter](this.settings.iconColorAfter);
+          const result = await response.json();
+         
+          document.dispatchEvent(new CustomEvent('wishlist:updated'));
+          if (result.token && !this.token) {
+            this.token = result.token;
+            window.WishlistUtils.setCookie('jwt', this.token, 3.5);
+          }
+           document.dispatchEvent(new CustomEvent('wishlist:icon-toggled', {
+            detail: { productId }
+          }));
+        } catch (err) {
+          console.error("Error updating wishlist:", err);
         }
-        this.updateIconsForProduct(productId);
-        const response = await fetch(`/apps/apw/app/${endpoint}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            customerId: this.customerId,
-            productId,
-            uid: this.uid,
-            storeUrl: this.storeUrl,
-            token: this.token,
-            currency: this.currency
-          })
-        });
+      });
 
-        const result = await response.json();
-
-        document.dispatchEvent(new CustomEvent('wishlist:updated'));
-        if (result.token && !this.token) {
-          this.token = result.token;
-          window.WishlistUtils.setCookie('jwt', this.token, 3.5);
-        }
-        document.dispatchEvent(new CustomEvent('wishlist:icon-toggled', {
-          detail: { productId }
-        }));
-      } catch (err) {
-        console.error("Error updating wishlist:", err);
-      }
-    });
-
-    imageContainer.appendChild(icon);
-    card.dataset.wishlistProcessed = true;
+      container.appendChild(icon);
+      card.dataset.wishlistProcessed = true;
+    } catch (err) {
+      console.error("Error processing product:", err);
+    }
   }
 
   processCards() {
-    const selectors = (this.settings.custoSelectors && this.settings.custoSelectors.length > 0)
-      ? this.settings.custoSelectors
-      : this.settings.defaultSelectors;
-    const productCardSelector = selectors.join(', ');
-    const productCards = document.querySelectorAll(productCardSelector);
+    const productCards = document.querySelectorAll(`[data-product-handle],
+      a[href*="/products/"],
+      .product-card,
+      .grid__item,
+      .card`);
     productCards.forEach(card => this.handleProductCard(card));
 
     if (productCards.length === 0 && this.checkCount < this.settings.maxChecks) {
@@ -351,13 +308,9 @@ class WishlistIconManager {
       mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
           if (node.nodeType === 1) {
-            const selectors = (this.settings.custoSelectors && this.settings.custoSelectors.length > 0)
-              ? this.settings.custoSelectors
-              : this.settings.defaultSelectors;
-            const productCardSelector = selectors.join(', ');
-            const cards = node.matches(productCardSelector)
+            const cards = node.matches('[data-product-handle], a[href*="/products/"], .product-card, .grid__item, .card')
               ? [node]
-              : node.querySelectorAll(productCardSelector);
+              : node.querySelectorAll('[data-product-handle], a[href*="/products/"], .product-card, .grid__item, .card');
             cards.forEach(card => this.handleProductCard(card));
           }
         });
