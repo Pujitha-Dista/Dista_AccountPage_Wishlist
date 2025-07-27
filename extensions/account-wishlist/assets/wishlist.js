@@ -18,7 +18,8 @@ class WishlistButton {
     this.text = document.createElement('span');
     document.addEventListener('wishlist:icon-toggled', (e) => {
       if (e.detail.productId == this.productId) {
-        this.setButtonState(false); // Update button state to "not wishlisted"
+        // Use the isWishlisted property from the event detail
+        this.setButtonState(e.detail.isWishlisted);
       }
     });
     this.init();
@@ -313,7 +314,10 @@ class WishlistIconManager {
           window.WishlistUtils.setCookie('jwt', this.token, 3.5);
         }
          document.dispatchEvent(new CustomEvent('wishlist:icon-toggled', {
-          detail: { productId }
+          detail: { 
+            productId,
+            isWishlisted: !isWishlisted // The new state after the toggle
+          }
         }));
       } catch (err) {
         console.error("Error updating wishlist:", err);
