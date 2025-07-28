@@ -29,12 +29,12 @@
                 </div>
                 <div class="itemPrice">{{ items.original_price | money_with_currency }}</div>
                 {% if order.cancelled %}
-                  {% comment %} {% if order.financial_status == 'refunded' %}
+                   {% if order.financial_status == 'refunded' %}
                     <div class="itemStatus" data-order-id="{{ order.id }}" style="color:#1A8908">{{ order.financial_status }}</div>
                   {% else %}
                      <div class="itemStatus" data-order-id="{{ order.id }}" style="color:#FDC028">Cancelled</div>
-                  {% endif %} {% endcomment %}
-                   <div class="itemStatus" data-order-id="{{ order.id }}" style="color:#FDC028">Cancelled</div>
+                  {% endif %}
+                   {% comment %} <div class="itemStatus" data-order-id="{{ order.id }}" style="color:#FDC028">Cancelled</div> {% endcomment %}
                 {% else %}
                     {% comment %} {% if order.financial_status == 'refunded' %}
                       <div class="itemStatus" data-order-id="{{ order.id }}" style="color:#1A8908">{{ order.financial_status }}</div>
