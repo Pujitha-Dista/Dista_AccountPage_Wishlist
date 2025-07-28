@@ -18,7 +18,8 @@ class WishlistButton {
     this.text = document.createElement('span');
     document.addEventListener('wishlist:icon-toggled', (e) => {
       if (e.detail.productId == this.productId) {
-        this.setButtonState(false); // Update button state to "not wishlisted"
+        // Use the isWishlisted property from the event detail
+        this.setButtonState(e.detail.isWishlisted);
       }
     });
     this.init();
@@ -114,13 +115,12 @@ class WishlistIconManager {
     this.token = window.WishlistUtils.getCookie('jwt') || '';
     this.currency = currency || 'USD';
     this.wishlistedProducts = new Set();
-
     this.settings = {
       iconBefore: 'heart',
       iconAfter: 'filled',
       iconColorBefore: '#000000',
       iconColorAfter: '#ff0000',
-      Selectors: [
+      defaultSelectors: [
         '.product-card__image-container',
         '.card__media',
         '.grid-product__image-wrap',
@@ -128,8 +128,10 @@ class WishlistIconManager {
         '.product-image-container',
         '.product__image-wrapper',
         '[data-product-media-container]',
-        '.image-container'
+        '.image-container',
+        '.card__inner',
       ],
+      customSelectors: [],
       checkInterval: 300,
       maxChecks: 5
     };
@@ -138,6 +140,9 @@ class WishlistIconManager {
       heart: color => `<svg xmlns="http://www.w3.org/2000/svg" fill="${color}" viewBox="0 0 24 24"><path d="M14 20.408c-.492.308-.903.546-1.192.709-.153.086-.308.17-.463.252h-.002a.75.75 0 01-.686 0 16.709 16.709 0 01-.465-.252 31.147 31.147 0 01-4.803-3.34C3.8 15.572 1 12.331 1 8.513 1 5.052 3.829 2.5 6.736 2.5 9.03 2.5 10.881 3.726 12 5.605 13.12 3.726 14.97 2.5 17.264 2.5 20.17 2.5 23 5.052 23 8.514c0 3.818-2.801 7.06-5.389 9.262A31.146 31.146 0 0114 20.408z"/></svg>`,
       filled: color => `<svg xmlns="http://www.w3.org/2000/svg" fill="${color}" viewBox="0 0 24 24"><path d="M14 20.408c-.492.308-.903.546-1.192.709-.153.086-.308.17-.463.252h-.002a.75.75 0 01-.686 0 16.709 16.709 0 01-.465-.252 31.147 31.147 0 01-4.803-3.34C3.8 15.572 1 12.331 1 8.513 1 5.052 3.829 2.5 6.736 2.5 9.03 2.5 10.881 3.726 12 5.605 13.12 3.726 14.97 2.5 17.264 2.5 20.17 2.5 23 5.052 23 8.514c0 3.818-2.801 7.06-5.389 9.262A31.146 31.146 0 0114 20.408z"/></svg>`
     };
+
+    // Cache product data to avoid duplicate requests
+    this.productCache = new Map();
   }
 
   async fetchSettings() {
@@ -149,7 +154,7 @@ class WishlistIconManager {
         const customSelectors = JSON.parse(data.reply?.classSelector || '[]');
         if (Array.isArray(customSelectors)) {
           const cleaned = customSelectors.map(s => s.trim()).filter(Boolean);
-          this.settings.Selectors = Array.from(new Set([...this.settings.Selectors, ...cleaned]));
+          this.settings.customSelectors = Array.from(new Set([...this.settings.customSelectors, ...cleaned]));
         }
       } catch (e) {
         console.warn('Failed to parse classSelector from backend:', e);
@@ -190,13 +195,7 @@ class WishlistIconManager {
     }
   }
 
-  findImageContainer(element) {
-    const imageContainer = element.closest(this.settings.Selectors.join(', '));
-    if (imageContainer) return imageContainer;
 
-    const img = element.querySelector('img') || element.closest('img');
-    return img ? img.parentElement : null;
-  }
 
   createIcon(isWishlisted, productId) {
     const icon = document.createElement('div');
@@ -220,81 +219,121 @@ class WishlistIconManager {
   async handleProductCard(card) {
     if (card.dataset.wishlistProcessed || card.classList.contains(this.settings.excludedClass) || card.closest('.wishlist-card')) return;
 
-    const imageContainer = this.findImageContainer(card);
+    // Find the image container or the image itself
+    let selectors = (this.settings.customSelectors && this.settings.customSelectors.length > 0)
+      ? this.settings.customSelectors
+      : this.settings.defaultSelectors;
+
+    let imageContainer = null;
+    for (const selector of selectors) {
+      imageContainer = card.querySelector(selector) || card.closest(selector);
+      if (imageContainer) break;
+    }
+
+    // Fallback: try to find any container that might work
+    if (!imageContainer) {
+      imageContainer = card.querySelector('[class*="image"], [class*="media"], [class*="card"], [data-product-handle], a[href*="/products/"], .product-card, .grid__item, .card, .card__inner') || 
+                      card.querySelector('img')?.parentElement || 
+                      card;
+    }
     if (!imageContainer) return;
 
-    const handle = card.dataset.productHandle || card.href?.split('/products/')[1]?.split(/[?#]/)[0];
-    if (!handle) return;
+    // Get product handle or ID
+    let productId = card.dataset.productId;
+    let handle = card.dataset.productHandle;
 
-    try {
-      const productId = card.dataset.productId || await fetch(`/products/${handle}.js`)
-        .then(res => res.json())
-        .then(product => product.id.toString());
-
-      const icon = this.createIcon(this.wishlistedProducts.has(productId), productId);
-      const container = card.closest('.product-card, .card, .grid__item') || card;
-
-      if (window.getComputedStyle(container).position === 'static') {
-        container.style.position = 'relative';
+    // Try to get handle from anchor if not present
+    if (!handle) {
+      const productLink = card.querySelector('a[href*="/products/"]');
+      if (productLink) {
+        handle = productLink.getAttribute('href').split('/products/')[1]?.split(/[?#]/)[0];
       }
-
-      icon.addEventListener('click', async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const isWishlisted = this.wishlistedProducts.has(productId);
-        const endpoint = isWishlisted ? 'apiremove' : 'apiwishlist';
-
-        try {
-          if (isWishlisted) {
-            this.wishlistedProducts.delete(productId);
-            icon.innerHTML = this.icons[this.settings.iconBefore](this.settings.iconColorBefore);
-          } else {
-            this.wishlistedProducts.add(productId);
-            icon.innerHTML = this.icons[this.settings.iconAfter](this.settings.iconColorAfter);
-          }
-          this.updateIconsForProduct(productId);
-          const response = await fetch(`/apps/apw/app/${endpoint}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              customerId: this.customerId,
-              productId,
-              uid: this.uid,
-              storeUrl: this.storeUrl,
-              token: this.token,
-              currency: this.currency
-            })
-          });
-
-          const result = await response.json();
-         
-          document.dispatchEvent(new CustomEvent('wishlist:updated'));
-          if (result.token && !this.token) {
-            this.token = result.token;
-            window.WishlistUtils.setCookie('jwt', this.token, 3.5);
-          }
-           document.dispatchEvent(new CustomEvent('wishlist:icon-toggled', {
-            detail: { productId }
-          }));
-        } catch (err) {
-          console.error("Error updating wishlist:", err);
-        }
-      });
-
-      container.appendChild(icon);
-      card.dataset.wishlistProcessed = true;
-    } catch (err) {
-      console.error("Error processing product:", err);
     }
+    if (!productId && handle) {
+      if (this.productCache.has(handle)) {
+        productId = this.productCache.get(handle);
+      } else {
+        try {
+          const productData = await fetch(`/products/${handle}.js`).then(res => res.json());
+          productId = productData.id.toString();
+          this.productCache.set(handle, productId);
+        } catch (e) {
+          console.error('Failed to fetch product data for handle:', handle, e);
+          return;
+        }
+      }
+    }
+
+    if (!productId) return;
+
+    // Prevent duplicate icons
+    if (imageContainer.querySelector('.wishlist-icon')) return;
+
+    // Create and append the icon
+    const icon = this.createIcon(this.wishlistedProducts.has(productId), productId);
+
+    // Style the container if needed
+    if (window.getComputedStyle(imageContainer).position === 'static') {
+      imageContainer.style.position = 'relative';
+    }
+
+    icon.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const isWishlisted = this.wishlistedProducts.has(productId);
+      const endpoint = isWishlisted ? 'apiremove' : 'apiwishlist';
+
+      try {
+        if (isWishlisted) {
+          this.wishlistedProducts.delete(productId);
+          icon.innerHTML = this.icons[this.settings.iconBefore](this.settings.iconColorBefore);
+        } else {
+          this.wishlistedProducts.add(productId);
+          icon.innerHTML = this.icons[this.settings.iconAfter](this.settings.iconColorAfter);
+        }
+        this.updateIconsForProduct(productId);
+        const response = await fetch(`/apps/apw/app/${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerId: this.customerId,
+            productId,
+            uid: this.uid,
+            storeUrl: this.storeUrl,
+            token: this.token,
+            currency: this.currency
+          })
+        });
+
+        const result = await response.json();
+       
+        document.dispatchEvent(new CustomEvent('wishlist:updated'));
+        if (result.token && !this.token) {
+          this.token = result.token;
+          window.WishlistUtils.setCookie('jwt', this.token, 3.5);
+        }
+         document.dispatchEvent(new CustomEvent('wishlist:icon-toggled', {
+          detail: { 
+            productId,
+            isWishlisted: !isWishlisted // The new state after the toggle
+          }
+        }));
+      } catch (err) {
+        console.error("Error updating wishlist:", err);
+      }
+    });
+
+    imageContainer.appendChild(icon);
+    card.dataset.wishlistProcessed = true;
   }
 
   processCards() {
-    const productCards = document.querySelectorAll(`[data-product-handle],
-      a[href*="/products/"],
-      .product-card,
-      .grid__item,
-      .card`);
+    const selectors = (this.settings.customSelectors && this.settings.customSelectors.length > 0)
+      ? this.settings.customSelectors
+      : this.settings.defaultSelectors;
+    const productCardSelector = selectors.join(', ');
+    const productCards = document.querySelectorAll(productCardSelector);
     productCards.forEach(card => this.handleProductCard(card));
 
     if (productCards.length === 0 && this.checkCount < this.settings.maxChecks) {
@@ -308,9 +347,13 @@ class WishlistIconManager {
       mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
           if (node.nodeType === 1) {
-            const cards = node.matches('[data-product-handle], a[href*="/products/"], .product-card, .grid__item, .card')
+            const selectors = (this.settings.customSelectors && this.settings.customSelectors.length > 0)
+              ? this.settings.customSelectors
+              : this.settings.defaultSelectors;
+            const productCardSelector = selectors.join(', ');
+            const cards = node.matches(productCardSelector)
               ? [node]
-              : node.querySelectorAll('[data-product-handle], a[href*="/products/"], .product-card, .grid__item, .card');
+              : node.querySelectorAll(productCardSelector);
             cards.forEach(card => this.handleProductCard(card));
           }
         });
