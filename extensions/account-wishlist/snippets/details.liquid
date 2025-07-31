@@ -180,10 +180,10 @@
           <input
             type="text"
             class="input-fields"
-            pattern="[A-Za-z]+"
             value="{{ customer.metafields.profile.gender | default: '' }}"
             placeholder="gender"
             name="gender"
+            onkeypress="return /[a-zA-Z ]/.test(event.key)"
           >
         </div>
         <div class="col-flex">
